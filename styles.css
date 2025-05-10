@@ -1,0 +1,23 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: rgb(39, 39, 39);
+  min-height: 100dvh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.scramble-text {
+  color: rgb(84, 84, 84);
+  font-size: 8rem;
+  font-family: monospace;
+  letter-spacing: -0.05em;
+}
