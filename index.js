@@ -1,29 +1,54 @@
 class TextScramble {
   constructor(el) {
     this.el = el;
-    this.targetText =
-      el.textContent.trim() || el.dataset.targetText || "Hello, world!";
-    this.speed = parseInt(el.dataset.speed) || 5;
-    this.chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    // Get raw text content (may contain \n \r \t and extra white spaces)
+    const rawContent = el.innerHTML || el.innerText;
+
+    // Use data-target-text if present,
+    // otherwise use rawContent
+    this.targetText = el.dataset.targetText || rawContent;
+
+    // Normalize target text
+    this.normalizedTargetText = this.normalizeText(this.targetText);
+
+    // Get configuration settings
+    this.speed = parseFloat(el.dataset.speed) || 1;
+    this.direction = el.dataset.direction || "fromLeft";
+    this.maxChar =
+      parseInt(el.dataset.maxChar) || this.normalizedTargetText.length;
+
+    // Define random characters sets
+    this.chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    this.lowerCase = "abcdefghijklmnopqrstuvwxyz";
+    this.specialChars = "!@#$%^&*()_+=-[]{}|;:,./<>?~⧞§¶¤←↑→↓≈≠≤≥±÷×";
+  }
+
+  // Handle newlines, returns, tabs and extra white spaces
+  normalizeText(text) {
+    return text
+      .replace(/[\n\r\t]+/g, " ") // Replace newlines, returns and tabs with space
+      .replace(/\s+/g, " ") // Collapse multiple spaces into one
+      .trim(); // Remove leading/trailing whitespace
   }
 
   randomChar() {
     return this.chars[Math.floor(Math.random() * this.chars.length)];
   }
 
-  update(frame, frames) {
+  fromLeft(frame, frames) {
+    const text = this.normalizedTargetText;
+    const progress = (frame / frames) * text.length;
     let complete = 0;
     let textContent = "";
 
-    for (let i = 0; i < this.targetText.length; i++) {
-      const finalChar = this.targetText[i];
-      const charProgress = (frame / frames) * this.targetText.length;
+    for (let i = 0; i < text.length; i++) {
+      const targetChar = text[i];
 
-      if (i < charProgress) {
+      if (i < progress) {
         // Character has settled
         complete++;
-        textContent += `${finalChar}`;
+        textContent += `${targetChar}`;
       } else {
         // Character is still scrambling
         textContent += `${this.randomChar()}`;
@@ -31,19 +56,54 @@ class TextScramble {
     }
 
     this.el.textContent = textContent;
-    return complete === this.targetText.length;
+    return complete === text.length;
+  }
+
+  fromRight(frame, frames) {
+    const text = this.normalizedTargetText;
+    const maxChar = this.maxChar;
+    const progress = (frame / frames) * maxChar;
+    let complete = 0;
+    let textContent = "";
+
+    for (let i = 0; i < maxChar; i++) {
+      if (i < progress) {
+        // Character has settled
+        const targetChar = text.at(maxChar - 1 - i) || "";
+
+        textContent = `${targetChar}` + textContent;
+        complete++;
+      } else {
+        // Character is still scrambling
+        textContent = `${this.randomChar()}` + textContent;
+      }
+    }
+
+    this.el.textContent = textContent;
+    return complete === maxChar;
   }
 
   start() {
-    const frames = this.targetText.length * this.speed;
+    let frames;
     let frame = 0;
+    const text = this.normalizedTargetText;
 
     const animate = () => {
-      const complete = this.update(frame, frames);
+      let complete;
+
+      if (this.direction === "fromLeft") {
+        frames = text.length * this.speed;
+        complete = this.fromLeft(frame, frames);
+      }
+
+      if (this.direction === "fromRight") {
+        frames = this.maxChar * this.speed;
+        complete = this.fromRight(frame, frames);
+      }
 
       if (complete || frame >= frames) {
         // Ensure final state
-        this.el.textContent = this.targetText;
+        this.el.textContent = text;
       } else {
         frame++;
         requestAnimationFrame(animate);

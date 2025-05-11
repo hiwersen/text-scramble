@@ -7,17 +7,30 @@
 }
 
 body {
-  background-color: rgb(39, 39, 39);
+  background-color: rgb(46, 46, 46);
   min-height: 100dvh;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .scramble-text {
-  color: rgb(84, 84, 84);
-  font-size: 8rem;
-  font-family: monospace;
-  letter-spacing: -0.05em;
+  /* Base styling */
+  color: rgb(102, 101, 101);
+  font-size: 1rem;
+
+  /* Creates perfect squares:
+   █ (Full Block) 
+   ░ ▒ ▓ (Shade Blocks)
+  */
+  font-family: "Courier New", monospace;
+  --char-width: 0.81em; /* manually adjusted */
+  line-height: calc(var(--char-width) + 0em);
+  margin-top: 0.09em; /* manually adjusted */
+
+  /*white-space: pre-line;*/
+  overflow-wrap: break-word;
+  word-break: break-all;
+
+  /* DEBUGGING STYLES */
+  width: fit-content;
+  height: fit-content;
+  /*background-color: red;*/
 }
