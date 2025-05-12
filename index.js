@@ -1,41 +1,37 @@
+const ipsumLorem =
+  "Nulla efficitur libero vitae velit commodo efficitur. In hac habitasse platea dictumst. Vestibulum tempor odio nec mauris faucibus, ut fringilla velit ullamcorper. Nam urna urna, lobortis fringilla justo eget, faucibus tempor nulla. Maecenas tincidunt justo sit amet congue pulvinar. Pellentesque tortor risus, lobortis at varius ut, sagittis ac sapien. Suspendisse at iaculis dolor. Fusce condimentum, leo et blandit viverra, lorem risus efficitur lacus, ut lacinia lectus risus vitae urna. Cras nec facilisis nisl.Nulla efficitur libero vitae velit commodo efficitur. In hac habitasse platea dictumst. Vestibulum tempor odio nec mauris faucibus, ut fringilla velit ullamcorper.";
+
 class TextScramble {
   constructor(el) {
     this.el = el;
+    this.innerHTML = el.innerHTML || el.innerText;
+    this.textContent = el.textContent;
 
-    // Get raw text content (may contain \n \r \t and extra white spaces)
-    const rawContent = el.innerHTML || el.innerText;
-
-    // Use data-target-text if present,
-    // otherwise use rawContent
-    this.targetText = el.dataset.targetText || rawContent;
+    // Define target text for animation:
+    // use data-target-text if present,
+    // otherwise use textContent
+    this.targetText = el.dataset.targetText || el.textContent;
 
     // Normalize target text
     this.normalizedTargetText = this.normalizeText(this.targetText);
 
-    console.log(this.normalizedTargetText.match(/[\n\r\t]+/g));
-
     // Get configuration settings
     this.speed = parseFloat(el.dataset.speed) || 1;
     this.direction = el.dataset.direction || "fromLeft";
-    this.maxChar = Math.max(
-      parseInt(el.dataset.maxChar) || 0,
-      this.normalizedTargetText.length
-    );
+    this.scrambleLength =
+      el.dataset.scrambleLength || this.normalizedTargetText.length;
 
-    // Get bezier curve points from data attribute or use defaults
-    // Format: "x1,y1,x2,y2" like CSS cubic-bezier
-    // Slow at the end:
-    // "0.0, 1.0, 0.0, 1.0", "0.0, 0.95, 0.02, 0.98", "0.5, 00, 0.3, 0.98"
-    // Slow at the start:
-    // "1.0, 0.0, 1.0, 0.0"
+    // Get and store bezier curve configuration
+    // Slow at the end: "0.0, 1.0, 0.0, 1.0"
+    // Slow at the start: "1.0, 0.0, 1.0, 0.0"
     const bezierPoints = el.dataset.bezier || "0.0, 1.0, 0.0, 1.0";
     this.bezierPoints = bezierPoints.split(",").map(parseFloat);
 
-    // Define random characters sets
-    this.chars = "░░░░░░░░░░░░░░░░ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    this.lowerCase = "abcdefghijklmnopqrstuvwxyz";
-    this.specialChars = "!@#$%^&*()_+=-[]{}|;:,./<>?~⧞§¶¤←↑→↓≈≠≤≥±÷×";
-    this.blockChars = "█░▒▓";
+    // Define random character sets
+    this.uppercase = "░░░░░░░░░░░░░░ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    this.lowercase = "abcdefghijklmnopqrstuvwxyz";
+    this.special = "!@#$%^&*()_+=-[]{}|;:,./<>?~⧞§¶¤←↑→↓≈≠≤≥±÷×";
+    this.blocks = "█░▒▓";
   }
 
   // Handle newlines, returns, tabs and extra white spaces
@@ -47,7 +43,7 @@ class TextScramble {
   }
 
   randomChar() {
-    return this.chars[Math.floor(Math.random() * this.chars.length)];
+    return this.uppercase[Math.floor(Math.random() * this.uppercase.length)];
   }
 
   // Cubic Bezier function implementation
@@ -61,17 +57,8 @@ class TextScramble {
 
   // Apply bezier timing to a linear progress value
   applyBezierTiming(linearProgress) {
-    // Ensure linearProgress is between 0 and 1
     linearProgress = Math.max(0, Math.min(1, linearProgress));
-
-    // Extract bezier points
     const [x1, y1, x2, y2] = this.bezierPoints;
-
-    // For simplicity in this implementation, we'll approximate the bezier curve
-    // This is a simplified approach - a full implementation would use Newton-Raphson method
-    // to find the exact t value for the given x (linearProgress)
-
-    // Since we're using cubic-bezier with p0=(0,0) and p3=(1,1), we can simplify
     return this.cubicBezier(linearProgress, 0, y1, y2, 1);
   }
 
@@ -94,7 +81,7 @@ class TextScramble {
       if (i < progress) {
         // Character has settled
         complete++;
-        textContent += `${targetChar}`;
+        textContent += targetChar;
       } else {
         // Character is still scrambling
         textContent += `${this.randomChar()}`;
@@ -107,56 +94,54 @@ class TextScramble {
 
   fromRight(frame, frames) {
     const text = this.normalizedTargetText;
-    const maxChar = this.maxChar;
 
     // Apply bezier timing to the linear progress
     const linearProgress = frame / frames;
     const bezierProgress = this.applyBezierTiming(linearProgress);
 
     // Calculate how many characters should be completed
-    const progress = bezierProgress * maxChar;
+    const progress = bezierProgress * this.scrambleLength;
 
     let complete = 0;
     let textContent = "";
 
-    for (let i = 0; i < maxChar; i++) {
-      if (i < progress) {
-        // Character has settled
-        const targetChar = text.at(maxChar - 1 - i) || "";
+    for (let i = 0; i < this.scrambleLength; i++) {
+      // Determine if this character should be settled yet
+      const isSettled = this.scrambleLength - i <= progress;
 
-        textContent = `${targetChar}` + textContent;
+      if (isSettled) {
+        // Character has settled
+        textContent += text[i] || "";
         complete++;
       } else {
         // Character is still scrambling
-        textContent = `${this.randomChar()}` + textContent;
+        textContent += this.randomChar();
       }
     }
 
     this.el.textContent = textContent;
-    return complete === maxChar;
+    return complete === this.scrambleLength;
   }
 
   start() {
-    let frames;
-    let frame = 0;
     const text = this.normalizedTargetText;
+    let frames = this.scrambleLength * this.speed;
+    let frame = 0;
 
     const animate = () => {
       let complete;
 
       if (this.direction === "fromLeft") {
-        frames = text.length * this.speed;
         complete = this.fromLeft(frame, frames);
       }
 
       if (this.direction === "fromRight") {
-        frames = this.maxChar * this.speed;
         complete = this.fromRight(frame, frames);
       }
 
       if (complete || frame >= frames) {
         // Ensure final state
-        this.el.textContent = text;
+        this.el.textContent = this.normalizedTargetText;
       } else {
         frame++;
         requestAnimationFrame(animate);

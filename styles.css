@@ -11,12 +11,19 @@ body {
   min-height: 100dvh;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 5px;
+  overflow: hidden;
 }
 
 .scramble-text {
   /* Base styling */
-  color: rgb(71, 71, 71); /*rgb(102, 101, 101)*/
+  color: rgb(85, 85, 85); /*rgb(102, 101, 101)*/
   font-size: 1rem;
+
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  z-index: -1;
 
   /* Creates perfect squares:
    █ (Full Block) 
@@ -24,9 +31,11 @@ body {
   */
   font-family: "Courier New", monospace;
 
-  --char-width: 0.8em; /* manually adjusted */
+  /* manually adjusted for better visual effect */
+  --char-width: 1ch;
   line-height: calc(var(--char-width) + 0.25em);
-  margin-top: 0.09em; /* manually adjusted */
+  width: calc(100% + calc(var(--char-width)) * 0.5);
+  margin-top: 0.2ch;
 
   /*
   word-break: break-all;
@@ -34,12 +43,6 @@ body {
   */
 
   word-break: break-all;
-
-  width: fit-content;
-  height: fit-content;
-
-  grid-column: 3 / -1;
-  max-width: 75%;
 
   /* DEBUGGING STYLES 
   background-color: red; */
