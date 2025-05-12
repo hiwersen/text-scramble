@@ -12,16 +12,30 @@ class TextScramble {
     // Normalize target text
     this.normalizedTargetText = this.normalizeText(this.targetText);
 
+    console.log(this.normalizedTargetText.match(/[\n\r\t]+/g));
+
     // Get configuration settings
     this.speed = parseFloat(el.dataset.speed) || 1;
     this.direction = el.dataset.direction || "fromLeft";
-    this.maxChar =
-      parseInt(el.dataset.maxChar) || this.normalizedTargetText.length;
+    this.maxChar = Math.max(
+      parseInt(el.dataset.maxChar) || 0,
+      this.normalizedTargetText.length
+    );
+
+    // Get bezier curve points from data attribute or use defaults
+    // Format: "x1,y1,x2,y2" like CSS cubic-bezier
+    // Slow at the end:
+    // "0.0, 1.0, 0.0, 1.0", "0.0, 0.95, 0.02, 0.98", "0.5, 00, 0.3, 0.98"
+    // Slow at the start:
+    // "1.0, 0.0, 1.0, 0.0"
+    const bezierPoints = el.dataset.bezier || "0.0, 1.0, 0.0, 1.0";
+    this.bezierPoints = bezierPoints.split(",").map(parseFloat);
 
     // Define random characters sets
-    this.chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    this.chars = "░░░░░░░░░░░░░░░░ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     this.lowerCase = "abcdefghijklmnopqrstuvwxyz";
     this.specialChars = "!@#$%^&*()_+=-[]{}|;:,./<>?~⧞§¶¤←↑→↓≈≠≤≥±÷×";
+    this.blockChars = "█░▒▓";
   }
 
   // Handle newlines, returns, tabs and extra white spaces
@@ -36,9 +50,41 @@ class TextScramble {
     return this.chars[Math.floor(Math.random() * this.chars.length)];
   }
 
+  // Cubic Bezier function implementation
+  cubicBezier(t, p0, p1, p2, p3) {
+    const cX = 3 * (p1 - p0);
+    const bX = 3 * (p2 - p1) - cX;
+    const aX = p3 - p0 - cX - bX;
+
+    return aX * Math.pow(t, 3) + bX * Math.pow(t, 2) + cX * t + p0;
+  }
+
+  // Apply bezier timing to a linear progress value
+  applyBezierTiming(linearProgress) {
+    // Ensure linearProgress is between 0 and 1
+    linearProgress = Math.max(0, Math.min(1, linearProgress));
+
+    // Extract bezier points
+    const [x1, y1, x2, y2] = this.bezierPoints;
+
+    // For simplicity in this implementation, we'll approximate the bezier curve
+    // This is a simplified approach - a full implementation would use Newton-Raphson method
+    // to find the exact t value for the given x (linearProgress)
+
+    // Since we're using cubic-bezier with p0=(0,0) and p3=(1,1), we can simplify
+    return this.cubicBezier(linearProgress, 0, y1, y2, 1);
+  }
+
   fromLeft(frame, frames) {
     const text = this.normalizedTargetText;
-    const progress = (frame / frames) * text.length;
+
+    // Apply bezier timing to the linear progress
+    const linearProgress = frame / frames;
+    const bezierProgress = this.applyBezierTiming(linearProgress);
+
+    // Calculate how many characters should be completed
+    const progress = bezierProgress * text.length;
+
     let complete = 0;
     let textContent = "";
 
@@ -62,7 +108,14 @@ class TextScramble {
   fromRight(frame, frames) {
     const text = this.normalizedTargetText;
     const maxChar = this.maxChar;
-    const progress = (frame / frames) * maxChar;
+
+    // Apply bezier timing to the linear progress
+    const linearProgress = frame / frames;
+    const bezierProgress = this.applyBezierTiming(linearProgress);
+
+    // Calculate how many characters should be completed
+    const progress = bezierProgress * maxChar;
+
     let complete = 0;
     let textContent = "";
 

@@ -7,13 +7,15 @@
 }
 
 body {
-  background-color: rgb(46, 46, 46);
+  background-color: rgb(26, 26, 26);
   min-height: 100dvh;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .scramble-text {
   /* Base styling */
-  color: rgb(102, 101, 101);
+  color: rgb(71, 71, 71); /*rgb(102, 101, 101)*/
   font-size: 1rem;
 
   /* Creates perfect squares:
@@ -21,16 +23,24 @@ body {
    ░ ▒ ▓ (Shade Blocks)
   */
   font-family: "Courier New", monospace;
-  --char-width: 0.81em; /* manually adjusted */
-  line-height: calc(var(--char-width) + 0em);
+
+  --char-width: 0.8em; /* manually adjusted */
+  line-height: calc(var(--char-width) + 0.25em);
   margin-top: 0.09em; /* manually adjusted */
 
-  /*white-space: pre-line;*/
+  /*
+  word-break: break-all;
   overflow-wrap: break-word;
+  */
+
   word-break: break-all;
 
-  /* DEBUGGING STYLES */
   width: fit-content;
   height: fit-content;
-  /*background-color: red;*/
+
+  grid-column: 3 / -1;
+  max-width: 75%;
+
+  /* DEBUGGING STYLES 
+  background-color: red; */
 }
