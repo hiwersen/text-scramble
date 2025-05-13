@@ -96,27 +96,18 @@ class TextScramble {
     const bezierProgress = this.applyBezierTiming(linearProgress);
 
     // Calculate how many characters should be completed
-    const progress = bezierProgress * this.scrambleLength;
+    const progress = Math.round(bezierProgress * this.scrambleLength);
 
-    let complete = 0;
-    let textContent = "";
+    let textContent = text.slice(this.scrambleLength - progress);
 
-    for (let i = 0; i < this.scrambleLength; i++) {
-      // Determine if this character should be settled yet
-      const isSettled = this.scrambleLength - i <= progress;
-
-      if (isSettled) {
-        // Character has settled
-        textContent += text[i] || "";
-        complete++;
-      } else {
-        // Character is still scrambling
-        textContent += this.randomChar();
-      }
+    for (let i = progress; i < this.scrambleLength; i++) {
+      this.loopCount++;
+      // Character is still scrambling
+      textContent = this.randomChar() + textContent;
     }
 
     this.el.textContent = textContent;
-    return complete === this.scrambleLength;
+    return progress === this.scrambleLength;
   }
 
   start() {
