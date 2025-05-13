@@ -32,8 +32,6 @@ class TextScramble {
     this.lowercase = "abcdefghijklmnopqrstuvwxyz";
     this.special = "!@#$%^&*()_+=-[]{}|;:,./<>?~⧞§¶¤←↑→↓≈≠≤≥±÷×";
     this.blocks = "█░▒▓";
-
-    this.loopCount = 0;
   }
 
   // Handle newlines, returns, tabs and extra white spaces
@@ -128,7 +126,6 @@ class TextScramble {
       if (complete || frame >= frames) {
         // Ensure final state
         this.el.textContent = this.normalizedTargetText;
-        console.log(this.loopCount);
       } else {
         frame++;
         requestAnimationFrame(animate);
